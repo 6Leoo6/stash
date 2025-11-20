@@ -5,13 +5,11 @@ import { z } from "zod";
 export type SignupState = {
   errors?: {
     username?: string[];
-    email?: string[];
     password?: string[];
     confirmPassword?: string[];
   };
   fields?: {
     username?: string;
-    email?: string;
     password?: string;
     confirmPassword?: string;
   }
@@ -24,7 +22,6 @@ const schema = z.object({
     .min(4, "Username must be at least 4 characters")
     .max(32, "Username cannot exceed 32 characters")
     .toLowerCase().regex(/^[a-z0-9_.]+$/, "Username must be alphanumeric"),
-  email: z.email("Invalid email address"),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -43,7 +40,6 @@ const schema = z.object({
 export async function signup(state: SignupState, payload: FormData): Promise<SignupState> {
   const fields = {
     username: payload.get("username") as string,
-    email: payload.get("email") as string,
     password: payload.get("password") as string,
     confirmPassword: payload.get("confirm-password") as string,
   };

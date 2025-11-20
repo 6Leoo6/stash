@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -33,9 +32,6 @@ export function SignupForm({
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Create your account</CardTitle>
-          <CardDescription>
-            Enter your email below to create your account
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={action}>
@@ -45,21 +41,6 @@ export function SignupForm({
                 <Input name="username" id="username" type="text" placeholder="johndoe123" defaultValue={state?.fields?.username ?? ""} required />
                 {state?.errors?.username && (
                   <FieldError>{state.errors.username}</FieldError>
-                )}
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  name="email"
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  defaultValue={state?.fields?.email ?? ""}
-                  required
-                />
-                <FieldDescription>Your email is not stored on our servers</FieldDescription>
-                {state?.errors?.email && (
-                  <FieldError>{state.errors.email}</FieldError>
                 )}
               </Field>
               <Field>
