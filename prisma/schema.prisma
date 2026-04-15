@@ -35,9 +35,10 @@ model Stash {
   encryptedMetadata String
   encryptedPreview  String
   ownerMemberToken  String
-  memberSlots       Json
-  currentEpoch      Int      @default(0)
-  createdAt         DateTime @default(now())
+  memberSlots              Json
+  encryptedAnnouncements   Json     @default("[]")
+  currentEpoch             Int      @default(0)
+  createdAt                DateTime @default(now())
 
   inviteLinks InviteLink[]
   listings    Listing[]
