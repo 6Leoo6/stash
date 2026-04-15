@@ -13,9 +13,11 @@ model User {
   passwordHash            String
   identityPublicKey       String
   encryptedIdentityBundle String
+  encryptedStashIndex     String?
   createdAt               DateTime  @default(now())
 
-  sessions Session[]
+  sessions     Session[]
+  ownedStashes Stash[]
 }
 
 model Session {
@@ -28,7 +30,10 @@ model Session {
 
 model Stash {
   id                String   @id
+  ownerUserId       String
+  owner             User     @relation(fields: [ownerUserId], references: [id])
   encryptedMetadata String
+  encryptedPreview  String
   ownerMemberToken  String
   memberSlots       Json
   currentEpoch      Int      @default(0)
