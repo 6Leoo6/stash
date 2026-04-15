@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                      String    @id @default(uuid())
+  username                String    @unique
+  passwordHash            String
+  identityPublicKey       String
+  encryptedIdentityBundle String
+  createdAt               DateTime  @default(now())
+
+  sessions Session[]
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Stash {
+  id                String   @id
+  encryptedMetadata String
+  ownerMemberToken  String
+  memberSlots       Json
+  currentEpoch      Int      @default(0)
+  createdAt         DateTime @default(now())
+
+  inviteLinks InviteLink[]
+  listings    Listing[]
+  orders      Order[]
+}
+
+model InviteLink {
+  id                String    @id @default(uuid())
+  stashId           String
+  stash             Stash     @relation(fields: [stashId], references: [id], onDelete: Cascade)
+  code              String    @unique
+  encryptedPayload  String
+  salt              String
+  passwordProtected Boolean   @default(false)
+  usesRemaining     Int?
+  expiresAt         DateTime?
+  createdAt         DateTime  @default(now())
+}
+
+model Listing {
+  id               String   @id @default(uuid())
+  stashId          String
+  stash            Stash    @relation(fields: [stashId], references: [id], onDelete: Cascade)
+  encryptedContent String
+  epoch            Int
+  createdAt        DateTime @default(now())
+
+  orders Order[]
+}
+
+model Order {
+  id               String   @id @default(uuid())
+  listingId        String
+  listing          Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  stashId          String
+  stash            Stash    @relation(fields: [stashId], references: [id], onDelete: Cascade)
+  encryptedContent String
+  epoch            Int
+  createdAt        DateTime @default(now())
+}
