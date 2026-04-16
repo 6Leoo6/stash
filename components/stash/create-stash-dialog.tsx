@@ -28,7 +28,7 @@ import type { DecryptedMetadata, DecryptedPreview } from "@/types/stash";
 
 export function CreateStashDialog() {
   const router = useRouter();
-  const { identity, setStashKey } = useCryptoStore();
+  const { identity } = useCryptoStore();
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -107,9 +107,6 @@ export function CreateStashDialog() {
         setError(data.error ?? "Failed to create stash");
         return;
       }
-
-      // Cache stash key immediately
-      setStashKey(stashId, stashKey);
 
       setOpen(false);
       setName("");

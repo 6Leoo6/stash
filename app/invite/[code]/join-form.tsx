@@ -41,7 +41,7 @@ type JoinState =
 
 export function JoinForm({ code }: { code: string }) {
   const router = useRouter();
-  const { identity, setStashKey, getStashKey } = useCryptoStore();
+  const { identity, getStashKey } = useCryptoStore();
 
   const [joinState, setJoinState] = useState<JoinState>("loading-invite");
   const [invite, setInvite] = useState<InviteMetadata | null>(null);
@@ -209,8 +209,8 @@ export function JoinForm({ code }: { code: string }) {
         return;
       }
 
-      // Cache stash key and navigate
-      setStashKey(invite.stashId, stashKey);
+      // Navigate — stash layout will run challenge-response, derive the stash key,
+      // and establish the server session before rendering any stash content.
       setJoinState("done");
       router.push(`/stash/${invite.stashId}`);
     } catch (err) {
@@ -218,7 +218,7 @@ export function JoinForm({ code }: { code: string }) {
       setError("Something went wrong while joining.");
       setJoinState("confirm");
     }
-  }, [invite, identity, stashKey, previewName, code, setStashKey, router]);
+  }, [invite, identity, stashKey, previewName, code, router]);
 
   // ── Render states ────────────────────────────────────────────────────────
 
