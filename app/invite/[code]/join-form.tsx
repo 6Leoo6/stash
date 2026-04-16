@@ -13,7 +13,7 @@ import { encryptAesGcm, deriveEpochKey } from "@/lib/crypto/encryption";
 import { decryptAesGcm } from "@/lib/crypto/encryption";
 import { sealEcies } from "@/lib/crypto/ecies";
 import { memberToken } from "@/lib/crypto/hash";
-import { toBase64, toUtf8, fromBase64 } from "@/lib/crypto/codec";
+import { toBase64, toUtf8, fromBase64, fromBase64Url } from "@/lib/crypto/codec";
 import { useCryptoStore } from "@/stores/crypto-store";
 import { useStashAuth } from "@/hooks/use-stash-auth";
 import type { EncryptedField } from "@/types/crypto";
@@ -87,9 +87,7 @@ export function JoinForm({ code }: { code: string }) {
         }
 
         try {
-          const inviteKey = fromBase64(
-            Buffer.from(keyParam, "base64url").toString("base64")
-          );
+          const inviteKey = fromBase64Url(keyParam);
           await decryptAndConfirm(data, inviteKey);
         } catch {
           setError("Failed to decrypt invite. The link may be corrupted.");

@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { encryptAesGcm } from "@/lib/crypto/encryption";
-import { toBase64, toUtf8, fromBase64 } from "@/lib/crypto/codec";
+import { toBase64, toBase64Url, toUtf8, fromBase64 } from "@/lib/crypto/codec";
 import { randomBytes } from "@noble/hashes/utils.js";
 import { useCryptoStore } from "@/stores/crypto-store";
 
@@ -81,7 +81,7 @@ export function InviteManager({ stashId, stashPreviewName }: Props) {
         })) as Uint8Array;
       } else {
         inviteKey = randomBytes(32);
-        keyFragment = "#k=" + Buffer.from(inviteKey).toString("base64url");
+        keyFragment = "#k=" + toBase64Url(inviteKey);
       }
 
       const payload = JSON.stringify({
