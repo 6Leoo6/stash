@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useCryptoStore } from "@/stores/crypto-store";
 import { OrderCard } from "@/components/order/order-card";
+import { StashNav } from "@/components/stash/stash-nav";
 import { encryptAesGcm, deriveEpochKey } from "@/lib/crypto/encryption";
 import { toUtf8 } from "@/lib/crypto/codec";
 import type { DecryptedOrder } from "@/types/stash";
@@ -23,6 +24,7 @@ export default function OrdersPage() {
 
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [currentEpoch, setCurrentEpoch] = useState(0);
+  const [stashName, setStashName] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -32,8 +34,17 @@ export default function OrdersPage() {
       ]);
       if (ordersRes.ok) setOrders(await ordersRes.json());
       if (stashRes.ok) {
-        const { currentEpoch: epoch } = await stashRes.json();
+        const { currentEpoch: epoch, encryptedMetadata } = await stashRes.json();
         setCurrentEpoch(epoch ?? 0);
+        if (stashKey && encryptedMetadata) {
+          try {
+            const { decryptAesGcm } = await import("@/lib/crypto/encryption");
+            const field = JSON.parse(encryptedMetadata);
+            const bytes = decryptAesGcm(field, stashKey);
+            const meta = JSON.parse(new TextDecoder().decode(bytes));
+            setStashName(meta.name ?? "");
+          } catch { /* leave blank */ }
+        }
       }
     }
     load();
@@ -74,6 +85,7 @@ export default function OrdersPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10 space-y-6">
+      <StashNav stashId={stashId} stashName={stashName} />
       <h1 className="text-2xl font-bold">Orders</h1>
 
       {orders.length === 0 ? (

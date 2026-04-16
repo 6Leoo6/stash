@@ -10,6 +10,7 @@ import { rekeyStash } from "@/lib/stash/rekey";
 import { useCryptoStore } from "@/stores/crypto-store";
 import { MemberList } from "@/components/member/member-list";
 import { InviteManager } from "@/components/member/invite-manager";
+import { StashNav } from "@/components/stash/stash-nav";
 import { Separator } from "@/components/ui/separator";
 import type { DecryptedMetadata } from "@/types/stash";
 import type { EncryptedField, MemberSlot } from "@/types/crypto";
@@ -102,6 +103,7 @@ export default function MembersPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10 space-y-8">
+      <StashNav stashId={stashId} stashName={previewName} />
       <div>
         <h1 className="text-2xl font-bold">Members</h1>
         <p className="text-sm text-muted-foreground mt-1">

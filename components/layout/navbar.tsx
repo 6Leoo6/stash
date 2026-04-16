@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut } from "lucide-react";
+import { LogOut, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCryptoStore } from "@/stores/crypto-store";
 
@@ -21,10 +21,18 @@ export function Navbar() {
       <Link href="/dashboard" className="font-semibold tracking-tight">
         Stash
       </Link>
-      <Button variant="ghost" size="sm" onClick={handleLogout}>
-        <LogOut className="h-4 w-4 mr-2" />
-        Sign out
-      </Button>
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/profile">
+            <UserCircle className="h-4 w-4 mr-2" />
+            Profile
+          </Link>
+        </Button>
+        <Button variant="ghost" size="sm" onClick={handleLogout}>
+          <LogOut className="h-4 w-4 mr-2" />
+          Sign out
+        </Button>
+      </div>
     </header>
   );
 }

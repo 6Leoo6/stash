@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ListingCard } from "@/components/listing/listing-card";
+import { StashNav } from "@/components/stash/stash-nav";
 import { encryptAesGcm, deriveEpochKey } from "@/lib/crypto/encryption";
 import { toUtf8 } from "@/lib/crypto/codec";
 import { deriveMemberKeyPair } from "@/lib/crypto/keys";
@@ -41,6 +42,7 @@ export default function ListingsPage() {
 
   const [listings, setListings] = useState<ListingRow[]>([]);
   const [currentEpoch, setCurrentEpoch] = useState(0);
+  const [stashName, setStashName] = useState("");
   const [orderDialog, setOrderDialog] = useState<OrderDialogState>(null);
   const [quantity, setQuantity] = useState("1");
   const [notes, setNotes] = useState("");
@@ -55,8 +57,20 @@ export default function ListingsPage() {
       ]);
       if (listingsRes.ok) setListings(await listingsRes.json());
       if (stashRes.ok) {
-        const { currentEpoch: epoch } = await stashRes.json();
+        const { currentEpoch: epoch, encryptedMetadata } = await stashRes.json();
         setCurrentEpoch(epoch ?? 0);
+        // Decrypt stash name for breadcrumb
+        const sk = getStashKey(stashId);
+        if (sk && encryptedMetadata) {
+          try {
+            const { decryptAesGcm } = await import("@/lib/crypto/encryption");
+            const { fromBase64 } = await import("@/lib/crypto/codec");
+            const field = JSON.parse(encryptedMetadata);
+            const bytes = decryptAesGcm(field, sk);
+            const meta = JSON.parse(new TextDecoder().decode(bytes));
+            setStashName(meta.name ?? "");
+          } catch { /* leave blank */ }
+        }
       }
     }
     load();
@@ -110,6 +124,7 @@ export default function ListingsPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10 space-y-6">
+      <StashNav stashId={stashId} stashName={stashName} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Listings</h1>
         <Button size="sm" asChild>

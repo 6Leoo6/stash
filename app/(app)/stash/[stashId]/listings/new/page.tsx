@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useCryptoStore } from "@/stores/crypto-store";
 import { ListingForm } from "@/components/listing/listing-form";
+import { StashNav } from "@/components/stash/stash-nav";
 
 export default function NewListingPage() {
   const { stashId } = useParams<{ stashId: string }>();
@@ -28,6 +29,7 @@ export default function NewListingPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10 space-y-6">
+      <StashNav stashId={stashId} />
       <h1 className="text-2xl font-bold">New listing</h1>
       <ListingForm stashId={stashId} currentEpoch={currentEpoch} stashKey={stashKey} />
     </main>
