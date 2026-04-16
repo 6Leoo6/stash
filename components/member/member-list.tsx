@@ -1,13 +1,18 @@
 "use client";
 
-import { User } from "lucide-react";
+import { User, UserMinus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { DecryptedMetadata } from "@/types/stash";
 
 type Props = {
   metadata: DecryptedMetadata | null;
+  ownerToken?: string;
+  myToken?: string;
+  onKick?: (token: string) => void;
+  kicking?: string | null;
 };
 
-export function MemberList({ metadata }: Props) {
+export function MemberList({ metadata, ownerToken, myToken, onKick, kicking }: Props) {
   if (!metadata) {
     return <p className="text-sm text-muted-foreground">Loading members…</p>;
   }
@@ -27,7 +32,19 @@ export function MemberList({ metadata }: Props) {
         >
           <User className="h-4 w-4 text-muted-foreground shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{entry.nickname}</p>
+            <p className="text-sm font-medium truncate">
+              {entry.nickname}
+              {token === ownerToken && (
+                <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">
+                  owner
+                </span>
+              )}
+              {token === myToken && token !== ownerToken && (
+                <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">
+                  you
+                </span>
+              )}
+            </p>
             <p className="text-xs text-muted-foreground font-mono truncate">
               {token.slice(0, 16)}…
             </p>
@@ -35,6 +52,18 @@ export function MemberList({ metadata }: Props) {
           <span className="text-xs text-muted-foreground shrink-0">
             {new Date(entry.joinedAt).toLocaleDateString()}
           </span>
+          {onKick && token !== ownerToken && token !== myToken && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-destructive hover:text-destructive shrink-0"
+              onClick={() => onKick(token)}
+              disabled={kicking === token}
+              title="Kick member"
+            >
+              <UserMinus className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </li>
       ))}
     </ul>
