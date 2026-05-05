@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
+import { deriveMemberKeyPair } from "@/lib/crypto/keys";
+import { memberToken as computeMemberToken } from "@/lib/crypto/hash";
 import { useCryptoStore } from "@/stores/crypto-store";
 import { OrderCard } from "@/components/order/order-card";
 import { StashNav } from "@/components/stash/stash-nav";
@@ -19,12 +21,13 @@ type OrderRow = {
 
 export default function OrdersPage() {
   const { stashId } = useParams<{ stashId: string }>();
-  const getStashKey = useCryptoStore((s) => s.getStashKey);
+  const { identity, getStashKey } = useCryptoStore();
   const stashKey = getStashKey(stashId);
 
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [currentEpoch, setCurrentEpoch] = useState(0);
   const [stashName, setStashName] = useState("");
+  const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -34,8 +37,12 @@ export default function OrdersPage() {
       ]);
       if (ordersRes.ok) setOrders(await ordersRes.json());
       if (stashRes.ok) {
-        const { currentEpoch: epoch, encryptedMetadata } = await stashRes.json();
+        const { currentEpoch: epoch, encryptedMetadata, ownerMemberToken } = await stashRes.json();
         setCurrentEpoch(epoch ?? 0);
+        if (identity && ownerMemberToken) {
+          const memberKeys = deriveMemberKeyPair(identity.identityPrivKey, stashId);
+          setIsOwner(computeMemberToken(memberKeys.publicKey) === ownerMemberToken);
+        }
         if (stashKey && encryptedMetadata) {
           try {
             const { decryptAesGcm } = await import("@/lib/crypto/encryption");
@@ -48,7 +55,7 @@ export default function OrdersPage() {
       }
     }
     load();
-  }, [stashId]);
+  }, [stashId, identity]);
 
   const handleStatusChange = useCallback(
     async (
@@ -100,7 +107,7 @@ export default function OrdersPage() {
                 encryptedContent={row.encryptedContent}
                 epoch={row.epoch}
                 stashKey={stashKey}
-                onStatusChange={handleStatusChange}
+                onStatusChange={isOwner ? handleStatusChange : undefined}
               />
             </li>
           ))}

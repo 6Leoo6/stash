@@ -30,10 +30,18 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Verify stash exists and belongs to this session's owner (any member may post listings)
-  const stash = await prisma.stash.findUnique({ where: { id: stashId }, select: { id: true } });
+  const stash = await prisma.stash.findUnique({
+    where: { id: stashId },
+    select: { id: true, ownerMemberToken: true },
+  });
   if (!stash) {
     return NextResponse.json({ error: "Stash not found" }, { status: 404 });
+  }
+
+  const ownerToken = stash.ownerMemberToken;
+  const sessionToken = session.stashSessions?.[stashId]?.memberToken;
+  if (!sessionToken || sessionToken !== ownerToken) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const body = await req.json();

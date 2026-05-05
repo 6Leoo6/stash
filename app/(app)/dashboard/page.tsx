@@ -2,30 +2,34 @@
 
 import { useEffect, useState } from "react";
 import { openEcies } from "@/lib/crypto/ecies";
-import { fromBase64, toUtf8 } from "@/lib/crypto/codec";
+import { decryptAesGcm } from "@/lib/crypto/encryption";
 import { useCryptoStore } from "@/stores/crypto-store";
 import { StashCard } from "@/components/stash/stash-card";
 import { CreateStashDialog } from "@/components/stash/create-stash-dialog";
-import type { StashRow, DecryptedPreview } from "@/types/stash";
+import type { DecryptedPreview, StashRow } from "@/types/stash";
 import type { EciesPayload } from "@/types/crypto";
 
-type StashWithPreview = StashRow & { preview: DecryptedPreview | null };
+type StashEntry = { id: string; preview: DecryptedPreview | null };
 
 export default function DashboardPage() {
   const { identity } = useCryptoStore();
-  const [stashes, setStashes] = useState<StashWithPreview[]>([]);
+  const [stashes, setStashes] = useState<StashEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       if (!identity) return;
 
-      const res = await fetch("/api/stash");
-      if (!res.ok) return;
+      const [stashRes, meRes] = await Promise.all([
+        fetch("/api/stash"),
+        fetch("/api/auth/me"),
+      ]);
 
-      const rows: StashRow[] = await res.json();
+      if (!stashRes.ok) return;
 
-      const withPreviews = rows.map((row) => {
+      const rows: StashRow[] = await stashRes.json();
+
+      const owned: StashEntry[] = rows.map((row) => {
         let preview: DecryptedPreview | null = null;
         try {
           const payload: EciesPayload = JSON.parse(row.encryptedPreview);
@@ -34,10 +38,38 @@ export default function DashboardPage() {
         } catch {
           // Silently ignore decryption failures — show placeholder
         }
-        return { ...row, preview };
+        return { id: row.id, preview };
       });
 
-      setStashes(withPreviews);
+      const ownedIds = new Set(rows.map((r) => r.id));
+      const member: StashEntry[] = [];
+
+      if (meRes.ok) {
+        try {
+          const me = await meRes.json();
+          if (me.encryptedStashIndex) {
+            const bytes = decryptAesGcm(
+              JSON.parse(me.encryptedStashIndex),
+              identity.masterKey
+            );
+            const index: Array<{ stashId: string; previewName: string }> = JSON.parse(
+              new TextDecoder().decode(bytes)
+            );
+            for (const entry of index) {
+              if (!ownedIds.has(entry.stashId)) {
+                member.push({
+                  id: entry.stashId,
+                  preview: { name: entry.previewName, description: "" },
+                });
+              }
+            }
+          }
+        } catch {
+          // Index decryption failed — show owned stashes only
+        }
+      }
+
+      setStashes([...owned, ...member]);
       setLoading(false);
     }
 

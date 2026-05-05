@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,8 @@ import { useCryptoStore } from "@/stores/crypto-store";
 
 export function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") ?? "/dashboard";
   const setIdentity = useCryptoStore((s) => s.setIdentity);
 
   const [username, setUsername] = useState("");
@@ -61,7 +63,7 @@ export function SignupForm() {
       }
 
       setIdentity({ masterKey, identityPrivKey, identityPubKey });
-      router.push("/dashboard");
+      router.push(redirect);
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");

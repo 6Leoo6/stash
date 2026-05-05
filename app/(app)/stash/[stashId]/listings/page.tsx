@@ -43,6 +43,7 @@ export default function ListingsPage() {
   const [listings, setListings] = useState<ListingRow[]>([]);
   const [currentEpoch, setCurrentEpoch] = useState(0);
   const [stashName, setStashName] = useState("");
+  const [isOwner, setIsOwner] = useState(false);
   const [orderDialog, setOrderDialog] = useState<OrderDialogState>(null);
   const [quantity, setQuantity] = useState("1");
   const [notes, setNotes] = useState("");
@@ -57,8 +58,12 @@ export default function ListingsPage() {
       ]);
       if (listingsRes.ok) setListings(await listingsRes.json());
       if (stashRes.ok) {
-        const { currentEpoch: epoch, encryptedMetadata } = await stashRes.json();
+        const { currentEpoch: epoch, encryptedMetadata, ownerMemberToken } = await stashRes.json();
         setCurrentEpoch(epoch ?? 0);
+        if (identity && ownerMemberToken) {
+          const memberKeys = deriveMemberKeyPair(identity.identityPrivKey, stashId);
+          setIsOwner(computeMemberToken(memberKeys.publicKey) === ownerMemberToken);
+        }
         // Decrypt stash name for breadcrumb
         const sk = getStashKey(stashId);
         if (sk && encryptedMetadata) {
@@ -74,7 +79,7 @@ export default function ListingsPage() {
       }
     }
     load();
-  }, [stashId]);
+  }, [stashId, identity]);
 
   async function handleOrder() {
     if (!orderDialog || !stashKey || !identity) return;
@@ -127,12 +132,14 @@ export default function ListingsPage() {
       <StashNav stashId={stashId} stashName={stashName} />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Listings</h1>
-        <Button size="sm" asChild>
-          <Link href={`/stash/${stashId}/listings/new`}>
-            <Plus className="h-4 w-4 mr-2" />
-            New listing
-          </Link>
-        </Button>
+        {isOwner && (
+          <Button size="sm" asChild>
+            <Link href={`/stash/${stashId}/listings/new`}>
+              <Plus className="h-4 w-4 mr-2" />
+              New listing
+            </Link>
+          </Button>
+        )}
       </div>
 
       {listings.length === 0 ? (

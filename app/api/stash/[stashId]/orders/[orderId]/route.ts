@@ -21,6 +21,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
+  const stash = await prisma.stash.findUnique({
+    where: { id: stashId },
+    select: { ownerMemberToken: true },
+  });
+  if (!stash) {
+    return NextResponse.json({ error: "Stash not found" }, { status: 404 });
+  }
+
+  const sessionToken = session.stashSessions?.[stashId]?.memberToken;
+  if (!sessionToken || sessionToken !== stash.ownerMemberToken) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const order = await prisma.order.findFirst({
     where: { id: orderId, stashId },
     select: { id: true },

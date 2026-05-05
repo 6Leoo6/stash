@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,8 @@ import type { EncryptedIdentityBundle } from "@/types/crypto";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect") ?? "/dashboard";
   const setIdentity = useCryptoStore((s) => s.setIdentity);
 
   const [username, setUsername] = useState("");
@@ -52,7 +54,7 @@ export function LoginForm() {
       const identityPubKey = x25519.getPublicKey(identityPrivKey);
 
       setIdentity({ masterKey, identityPrivKey, identityPubKey });
-      router.push("/dashboard");
+      router.push(redirect);
     } catch (err) {
       console.error(err);
       setError("Invalid credentials or corrupted account data");

@@ -13,7 +13,7 @@ export default function StashLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!identity) {
-      router.push("/login");
+      router.push(`/login?redirect=/stash/${stashId}`);
       return;
     }
     if (state === "idle") {

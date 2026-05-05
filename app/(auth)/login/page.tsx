@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/login-form";
@@ -13,7 +14,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <LoginForm />
+          <Suspense><LoginForm /></Suspense>
           <p className="text-center text-sm text-muted-foreground">
             No account?{" "}
             <Link href="/signup" className="underline underline-offset-4 hover:text-primary">

@@ -68,17 +68,23 @@ export function JoinForm({ code }: { code: string }) {
       setInvite(data);
 
       if (!identity) {
-        // Save invite code to sessionStorage and redirect to login/signup
+        // Save invite code and key to sessionStorage so they survive the redirect.
+        // Use a code-scoped key so stale keys from other invites don't interfere.
         sessionStorage.setItem("pendingInvite", code);
+        const fragment = window.location.hash.slice(1);
+        const keyParam = new URLSearchParams(fragment).get("k");
+        if (keyParam) sessionStorage.setItem(`pendingInviteKey_${code}`, keyParam);
         setJoinState("needs-login");
         return;
       }
 
       if (!data.passwordProtected) {
-        // Extract invite key from URL fragment: #k=<base64url>
+        // Extract invite key from URL fragment (#k=<base64url>) or sessionStorage fallback.
+        // Do NOT remove from sessionStorage here — removal happens after a successful join
+        // to avoid losing the key on React Strict Mode double-invocations.
         const fragment = window.location.hash.slice(1);
         const params = new URLSearchParams(fragment);
-        const keyParam = params.get("k");
+        const keyParam = params.get("k") ?? sessionStorage.getItem(`pendingInviteKey_${code}`);
 
         if (!keyParam) {
           setError("Invite key missing from URL. Make sure you copied the full link.");
@@ -206,6 +212,10 @@ export function JoinForm({ code }: { code: string }) {
         setJoinState("confirm");
         return;
       }
+
+      // Clean up sessionStorage keys written during the pre-login phase
+      sessionStorage.removeItem("pendingInvite");
+      sessionStorage.removeItem(`pendingInviteKey_${code}`);
 
       // Navigate — stash layout will run challenge-response, derive the stash key,
       // and establish the server session before rendering any stash content.
