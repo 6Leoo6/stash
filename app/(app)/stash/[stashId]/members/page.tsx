@@ -22,6 +22,7 @@ export default function MembersPage() {
 
   const [metadata, setMetadata] = useState<DecryptedMetadata | null>(null);
   const [previewName, setPreviewName] = useState("");
+  const [previewDescription, setPreviewDescription] = useState("");
   const [ownerToken, setOwnerToken] = useState("");
   const [myToken, setMyToken] = useState("");
   const [rawSlots, setRawSlots] = useState<MemberSlot[]>([]);
@@ -44,6 +45,7 @@ export default function MembersPage() {
         const meta: DecryptedMetadata = JSON.parse(new TextDecoder().decode(bytes));
         setMetadata(meta);
         setPreviewName(meta.name);
+        setPreviewDescription(meta.description ?? "");
         setOwnerToken(ownerMemberToken ?? "");
         setRawSlots(Array.isArray(memberSlots) ? memberSlots : []);
 
@@ -126,7 +128,7 @@ export default function MembersPage() {
       {isOwner && (
         <>
           <Separator />
-          <InviteManager stashId={stashId} stashPreviewName={previewName} />
+          <InviteManager stashId={stashId} stashPreviewName={previewName} stashPreviewDescription={previewDescription} />
         </>
       )}
     </main>

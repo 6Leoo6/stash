@@ -28,6 +28,7 @@ type InviteMetadata = {
 type InvitePayload = {
   stashKey: string;
   previewName: string;
+  previewDescription?: string;
 };
 
 type JoinState =
@@ -47,6 +48,7 @@ export function JoinForm({ code }: { code: string }) {
   const [invite, setInvite] = useState<InviteMetadata | null>(null);
   const [stashKey, setLocalStashKey] = useState<Uint8Array | null>(null);
   const [previewName, setPreviewName] = useState<string>("");
+  const [previewDescription, setPreviewDescription] = useState<string>("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -114,6 +116,7 @@ export function JoinForm({ code }: { code: string }) {
     const payload: InvitePayload = JSON.parse(new TextDecoder().decode(bytes));
     setLocalStashKey(fromBase64(payload.stashKey));
     setPreviewName(payload.previewName);
+    setPreviewDescription(payload.previewDescription ?? "");
     setJoinState("confirm");
   }
 
@@ -175,7 +178,7 @@ export function JoinForm({ code }: { code: string }) {
       try {
         const meRes = await fetch("/api/auth/me");
         const me = await meRes.json();
-        const existing: Array<{ stashId: string; previewName: string }> =
+        const existing: Array<{ stashId: string; previewName: string; previewDescription?: string }> =
           me.encryptedStashIndex
             ? JSON.parse(
                 new TextDecoder().decode(
@@ -187,7 +190,7 @@ export function JoinForm({ code }: { code: string }) {
               )
             : [];
 
-        const updated = [...existing, { stashId: invite.stashId, previewName }];
+        const updated = [...existing, { stashId: invite.stashId, previewName, previewDescription }];
         encryptedStashIndex = JSON.stringify(
           encryptAesGcm(toUtf8(JSON.stringify(updated)), identity.masterKey)
         );
@@ -226,7 +229,7 @@ export function JoinForm({ code }: { code: string }) {
       setError("Something went wrong while joining.");
       setJoinState("confirm");
     }
-  }, [invite, identity, stashKey, previewName, code, router]);
+  }, [invite, identity, stashKey, previewName, previewDescription, code, router]);
 
   // ── Render states ────────────────────────────────────────────────────────
 

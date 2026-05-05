@@ -52,14 +52,14 @@ export default function DashboardPage() {
               JSON.parse(me.encryptedStashIndex),
               identity.masterKey
             );
-            const index: Array<{ stashId: string; previewName: string }> = JSON.parse(
+            const index: Array<{ stashId: string; previewName: string; previewDescription?: string }> = JSON.parse(
               new TextDecoder().decode(bytes)
             );
             for (const entry of index) {
               if (!ownedIds.has(entry.stashId)) {
                 member.push({
                   id: entry.stashId,
-                  preview: { name: entry.previewName, description: "" },
+                  preview: { name: entry.previewName, description: entry.previewDescription ?? "" },
                 });
               }
             }

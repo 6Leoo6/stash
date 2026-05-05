@@ -31,9 +31,10 @@ type InviteRecord = {
 type Props = {
   stashId: string;
   stashPreviewName: string;
+  stashPreviewDescription?: string;
 };
 
-export function InviteManager({ stashId, stashPreviewName }: Props) {
+export function InviteManager({ stashId, stashPreviewName, stashPreviewDescription = "" }: Props) {
   const getStashKey = useCryptoStore((s) => s.getStashKey);
   const [invites, setInvites] = useState<InviteRecord[]>([]);
   const [open, setOpen] = useState(false);
@@ -87,6 +88,7 @@ export function InviteManager({ stashId, stashPreviewName }: Props) {
       const payload = JSON.stringify({
         stashKey: toBase64(stashKey),
         previewName: stashPreviewName,
+        previewDescription: stashPreviewDescription,
       });
       const encryptedPayload = JSON.stringify(
         encryptAesGcm(toUtf8(payload), inviteKey)
