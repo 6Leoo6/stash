@@ -23,6 +23,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
       id: true,
       encryptedMetadata: true,
       ownerMemberToken: true,
+      memberSlots: true,
       currentEpoch: true,
       createdAt: true,
     },
