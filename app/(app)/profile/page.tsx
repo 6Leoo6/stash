@@ -33,7 +33,7 @@ export default function ProfilePage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <div className="flex justify-between gap-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
             <span className="text-muted-foreground">Username</span>
             <span className="font-medium">{username ?? "—"}</span>
           </div>
@@ -51,11 +51,11 @@ export default function ProfilePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          <div className="flex justify-between gap-4">
+          <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
             <span className="text-muted-foreground">Identity public key</span>
-            <span className="font-mono text-xs">
+            <span className="font-mono text-xs break-all sm:break-normal sm:text-right">
               {pubKeyPreview ?? (
-                <span className="italic text-muted-foreground">Not loaded — sign in again</span>
+                <span className="italic text-muted-foreground not-italic font-sans">Not loaded — sign in again</span>
               )}
             </span>
           </div>

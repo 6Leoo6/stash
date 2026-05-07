@@ -71,7 +71,7 @@ export function OrderCard({ id, listingId, encryptedContent, epoch, stashKey, on
       </div>
 
       {onStatusChange && nextStatuses.length > 0 && (
-        <div className="flex gap-2 pt-1">
+        <div className="flex flex-wrap gap-2 pt-1">
           {nextStatuses.map((s) => (
             <button
               key={s}
