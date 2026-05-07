@@ -117,13 +117,19 @@ export default function MembersPage() {
         <p className="text-sm text-destructive">{kickError}</p>
       )}
 
-      <MemberList
-        metadata={metadata}
-        ownerToken={ownerToken}
-        myToken={myToken}
-        onKick={isOwner ? handleKick : undefined}
-        kicking={kicking}
-      />
+      {metadata && !isOwner ? (
+        <p className="text-sm text-muted-foreground">
+          The member list is only visible to the stash owner.
+        </p>
+      ) : (
+        <MemberList
+          metadata={metadata}
+          ownerToken={ownerToken}
+          myToken={myToken}
+          onKick={isOwner ? handleKick : undefined}
+          kicking={kicking}
+        />
+      )}
 
       {isOwner && (
         <>
