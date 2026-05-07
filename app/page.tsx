@@ -17,7 +17,7 @@ export default function LandingPage() {
         </nav>
       </header>
 
-      <section className="flex flex-1 flex-col items-center justify-center gap-8 px-6 py-24 text-center">
+      <section className="flex flex-1 flex-col items-center justify-center gap-8 px-6 py-14 sm:py-24 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
           <Lock className="h-8 w-8" />
         </div>
@@ -37,7 +37,7 @@ export default function LandingPage() {
         </Button>
       </section>
 
-      <section className="border-t bg-muted/40 px-6 py-20">
+      <section className="border-t bg-muted/40 px-6 py-12 sm:py-20">
         <div className="mx-auto grid max-w-4xl gap-8 sm:grid-cols-3">
           <Feature
             icon={<Lock className="h-5 w-5" />}

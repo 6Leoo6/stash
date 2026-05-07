@@ -24,13 +24,13 @@ export function Navbar() {
       <div className="flex items-center gap-1">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/profile">
-            <UserCircle className="h-4 w-4 mr-2" />
-            Profile
+            <UserCircle className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Profile</span>
           </Link>
         </Button>
         <Button variant="ghost" size="sm" onClick={handleLogout}>
-          <LogOut className="h-4 w-4 mr-2" />
-          Sign out
+          <LogOut className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Sign out</span>
         </Button>
       </div>
     </header>
