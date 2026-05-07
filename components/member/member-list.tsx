@@ -49,7 +49,7 @@ export function MemberList({ metadata, ownerToken, myToken, onKick, kicking }: P
               {token.slice(0, 16)}…
             </p>
           </div>
-          <span className="text-xs text-muted-foreground shrink-0">
+          <span className="hidden sm:block text-xs text-muted-foreground shrink-0">
             {new Date(entry.joinedAt).toLocaleDateString()}
           </span>
           {onKick && token !== ownerToken && token !== myToken && (

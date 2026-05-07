@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, ShieldCheck } from "lucide-react";
+import { x25519 } from "@noble/curves/ed25519.js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +36,7 @@ type InvitePayload = {
 type JoinState =
   | "loading-invite"
   | "needs-login"
+  | "needs-unlock"
   | "needs-password"
   | "confirm"
   | "joining"
@@ -43,14 +45,18 @@ type JoinState =
 
 export function JoinForm({ code }: { code: string }) {
   const router = useRouter();
-  const { identity, getStashKey } = useCryptoStore();
+  const { identity, getStashKey, setIdentity } = useCryptoStore();
 
   const [joinState, setJoinState] = useState<JoinState>("loading-invite");
   const [invite, setInvite] = useState<InviteMetadata | null>(null);
   const [stashKey, setLocalStashKey] = useState<Uint8Array | null>(null);
   const [previewName, setPreviewName] = useState<string>("");
   const [previewDescription, setPreviewDescription] = useState<string>("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [unlockPassword, setUnlockPassword] = useState("");
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [unlocking, setUnlocking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Once we have a stash key, set up the stash auth
@@ -71,19 +77,22 @@ export function JoinForm({ code }: { code: string }) {
       setInvite(data);
 
       if (!identity) {
-        // Save invite code and key to sessionStorage so they survive the redirect.
-        // Use a code-scoped key so stale keys from other invites don't interfere.
+        // Save invite code and key to sessionStorage so they survive the redirect
+        // in the unauthenticated ("needs-login") path where the user has to sign up/in.
         sessionStorage.setItem("pendingInvite", code);
         const fragment = window.location.hash.slice(1);
         const keyParam = new URLSearchParams(fragment).get("k");
         if (keyParam) sessionStorage.setItem(`pendingInviteKey_${code}`, keyParam);
 
-        // Check for an existing server session (crypto keys absent but cookie present).
-        // If so, skip the "create account / sign in" screen and go straight to login
-        // so the user re-derives their keys and lands back here with identity loaded.
         const meRes = await fetch("/api/auth/me");
         if (meRes.ok) {
-          router.push(`/login?redirect=/invite/${code}`);
+          // User has a valid session but crypto keys aren't loaded (e.g. new tab).
+          // Show an inline unlock prompt instead of redirecting to the login page,
+          // so the user isn't confused by being sent to a "sign in" screen while
+          // they're already logged in.
+          const me = await meRes.json();
+          setUsername(me.username);
+          setJoinState("needs-unlock");
           return;
         }
 
@@ -152,6 +161,29 @@ export function JoinForm({ code }: { code: string }) {
       await decryptAndConfirm(invite, inviteKey);
     } catch {
       setError("Wrong password or corrupted invite.");
+    }
+  }
+
+  async function handleUnlock(e: React.FormEvent) {
+    e.preventDefault();
+    if (!username) return;
+    setUnlocking(true);
+    setUnlockError(null);
+
+    try {
+      const masterKey = await deriveMasterKey(unlockPassword, username);
+      const meRes = await fetch("/api/auth/me");
+      if (!meRes.ok) throw new Error("Session expired");
+      const { encryptedIdentityBundle } = await meRes.json();
+      const bundle = JSON.parse(encryptedIdentityBundle) as EncryptedField;
+      const identityPrivKey = decryptAesGcm(bundle, masterKey);
+      const identityPubKey = x25519.getPublicKey(identityPrivKey);
+      setIdentity({ masterKey, identityPrivKey, identityPubKey });
+      // useEffect re-runs with the new identity and resumes the invite flow
+    } catch {
+      setUnlockError("Wrong password. Try again.");
+    } finally {
+      setUnlocking(false);
     }
   }
 
@@ -274,7 +306,7 @@ export function JoinForm({ code }: { code: string }) {
         title="Sign in to join"
         description="You need an account to accept this invite."
       >
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <Button onClick={() => router.push(`/signup?redirect=/invite/${code}`)}>
             Create account
           </Button>
@@ -282,6 +314,33 @@ export function JoinForm({ code }: { code: string }) {
             Sign in
           </Button>
         </div>
+      </CenteredCard>
+    );
+  }
+
+  if (joinState === "needs-unlock") {
+    return (
+      <CenteredCard
+        title="Unlock your keys"
+        description="Re-enter your password to accept this invite."
+      >
+        <form onSubmit={handleUnlock} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="unlock-password">Password</Label>
+            <Input
+              id="unlock-password"
+              type="password"
+              value={unlockPassword}
+              onChange={(e) => setUnlockPassword(e.target.value)}
+              required
+              disabled={unlocking}
+            />
+          </div>
+          {unlockError && <p className="text-sm text-destructive">{unlockError}</p>}
+          <Button type="submit" className="w-full" disabled={unlocking}>
+            {unlocking ? "Unlocking…" : "Continue"}
+          </Button>
+        </form>
       </CenteredCard>
     );
   }
