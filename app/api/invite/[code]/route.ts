@@ -15,6 +15,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
       encryptedPayload: true,
       usesRemaining: true,
       expiresAt: true,
+      stash: { select: { encryptedMetadata: true } },
     },
   });
 
@@ -30,5 +31,6 @@ export async function GET(_req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Invite has no uses remaining" }, { status: 410 });
   }
 
-  return NextResponse.json(invite);
+  const { stash, ...inviteFields } = invite;
+  return NextResponse.json({ ...inviteFields, encryptedMetadata: stash.encryptedMetadata });
 }

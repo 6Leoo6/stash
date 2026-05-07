@@ -20,6 +20,7 @@ const schema = z.object({
   inviteCode: z.string().min(1),
   newSlot: slotSchema,
   announcement: announcementSchema,
+  updatedEncryptedMetadata: z.string().optional(),
   encryptedStashIndex: z.string().optional(),
 });
 
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     );
   }
 
-  const { inviteCode, newSlot, announcement, encryptedStashIndex } = parsed.data;
+  const { inviteCode, newSlot, announcement, updatedEncryptedMetadata, encryptedStashIndex } = parsed.data;
 
   const invite = await prisma.inviteLink.findUnique({
     where: { code: inviteCode },
@@ -91,6 +92,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       data: {
         memberSlots: [...slots, newSlot],
         encryptedAnnouncements: [...announcements, announcement],
+        ...(updatedEncryptedMetadata && { encryptedMetadata: updatedEncryptedMetadata }),
       },
     });
 

@@ -23,6 +23,7 @@ type InviteMetadata = {
   passwordProtected: boolean;
   salt: string;
   encryptedPayload: string;
+  encryptedMetadata: string;
 };
 
 type InvitePayload = {
@@ -76,6 +77,16 @@ export function JoinForm({ code }: { code: string }) {
         const fragment = window.location.hash.slice(1);
         const keyParam = new URLSearchParams(fragment).get("k");
         if (keyParam) sessionStorage.setItem(`pendingInviteKey_${code}`, keyParam);
+
+        // Check for an existing server session (crypto keys absent but cookie present).
+        // If so, skip the "create account / sign in" screen and go straight to login
+        // so the user re-derives their keys and lands back here with identity loaded.
+        const meRes = await fetch("/api/auth/me");
+        if (meRes.ok) {
+          router.push(`/login?redirect=/invite/${code}`);
+          return;
+        }
+
         setJoinState("needs-login");
         return;
       }
@@ -152,6 +163,7 @@ export function JoinForm({ code }: { code: string }) {
     try {
       const memberKeys = deriveMemberKeyPair(identity.identityPrivKey, invite.stashId);
       const token = memberToken(memberKeys.publicKey);
+      const joinedAt = new Date().toISOString();
 
       const newSlot = {
         token,
@@ -161,17 +173,25 @@ export function JoinForm({ code }: { code: string }) {
 
       // Encrypted join announcement (nick defaults to "Member")
       const epochKey = deriveEpochKey(stashKey, 0);
-      const announcementData = JSON.stringify({
-        token,
-        nickname: "Member",
-        joinedAt: new Date().toISOString(),
-      });
+      const announcementData = JSON.stringify({ token, nickname: "Member", joinedAt });
       const announcement = {
         encryptedContent: JSON.stringify(
           encryptAesGcm(toUtf8(announcementData), epochKey)
         ),
         epoch: 0,
       };
+
+      // Add self to the encrypted metadata member list so the members page shows all members
+      let updatedEncryptedMetadata: string | undefined;
+      try {
+        const field = JSON.parse(invite.encryptedMetadata);
+        const bytes = decryptAesGcm(field, stashKey);
+        const meta = JSON.parse(new TextDecoder().decode(bytes));
+        meta.members = { ...meta.members, [token]: { nickname: "Member", joinedAt } };
+        updatedEncryptedMetadata = JSON.stringify(encryptAesGcm(toUtf8(JSON.stringify(meta)), stashKey));
+      } catch {
+        // Best-effort — join still proceeds without metadata update
+      }
 
       // Update encrypted stash index
       let encryptedStashIndex: string | undefined;
@@ -205,6 +225,7 @@ export function JoinForm({ code }: { code: string }) {
           inviteCode: code,
           newSlot,
           announcement,
+          ...(updatedEncryptedMetadata && { updatedEncryptedMetadata }),
           ...(encryptedStashIndex && { encryptedStashIndex }),
         }),
       });
