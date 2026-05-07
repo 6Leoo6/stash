@@ -12,6 +12,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 
 FROM base AS runner
 WORKDIR /app
